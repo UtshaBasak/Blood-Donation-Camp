@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Users</title>
+        <style>
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        th, td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+<section style="text-align:center;" >
+    <h1>Looking for Blood</h1>
+    <form method="post" action="{% url 'search' %}">
+        {% csrf_token %}
+        <label for="zone">Zone:</label>
+        <select name="zone" id="zone">
+            <option value="North">North</option>
+            <option value="South">South</option>
+        </select>
+<br><br>
+        <label for="blood_group">Blood Group:</label>
+        <select name="blood_group" id="blood_group">
+            <option value="a_positive">A+</option>
+            <option value="a_negative">A-</option>
+            <option value="b_positive">B+</option>
+            <option value="b_negative">B-</option>
+            <option value="o_positive">O+</option>
+            <option value="o_negative">O-</option>
+            <option value="ab_positive">AB+</option>
+            <option value="ab_negative">AB-</option>
+            </select>
+<br><br>
+        <label for="quantity">Quantity:</label>
+        <input type="number" name="quantity" id="quantity">
+<br><br>
+        <button type="submit">Search</button>
+    </form>
+    {% if availability %}
+        <h4>Your desired blood is available</h4>
+    {% else %}
+        <h4>Sorry your desired blood is not available.. </h4>
+    {% endif %}
+
+<br><br>
+
+  <table>
+        <h1>Available Donors</h1>
+        <thead>
+            <tr>
+                <th>Donor Name</th>
+                <th>Blood Group</th>
+                <th>Email</th>
+                <th>Phone Number</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for donor in donors %}
+
+            <tr>
+                <td>{{ donor.user.first_name}}{{ donor.user.last_name}}</td>
+                <td>{{ donor.blood }}</td>
+                <td>{{ donor.user.email }}</td>
+                <td>{{ donor.phone_number }}</td>
+
+            {% endfor %}
+        </tbody>
+    </table>
+
+
+</section>
+
+</body>
+</html>

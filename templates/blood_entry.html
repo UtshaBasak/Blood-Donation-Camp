@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blood Donation Form</title>
+</head>
+<body>
+    <div style="text-align:center">
+
+ <h1>Blood Entry Information</h1>    <form method="post" action="entry">
+        {% csrf_token %}
+        <label for="date">Donation Date:</label>
+        <input type="date" id="date" name="date" required> <br><br>
+
+        <label for="blood_type">Blood Type:</label>
+        <select id="blood_type" name="blood_type" required>
+            <option value="A+">A+</option>
+            <option value="A-">A-</option>
+            <option value="B+">B+</option>
+            <option value="B-">B-</option>
+            <option value="O+">O+</option>
+            <option value="O-">O-</option>
+            <option value="AB+">AB+</option>
+            <option value="AB-">AB-</option>
+        </select> <br><br>
+
+        <label for="quantity">Quantity:</label>
+        <input type="number" id="quantity" name="quantity" min="1" required><br><br>
+
+
+        <button type="submit">Submit</button>
+    </form>
+    </div>
+</body>
+</html>

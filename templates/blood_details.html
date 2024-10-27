@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blood Details</title>
+    <style>
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        th, td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <table>
+        <h1>Blood Bank Information</h1>
+        <thead>
+            <tr>
+                <th>Branch Name</th>
+                <th>A+</th>
+                <th>A-</th>
+                <th>B+</th>
+                <th>B-</th>
+                <th>O+</th>
+                <th>O-</th>
+                <th>AB+</th>
+                <th>AB-</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for blood in blood_info %}
+            <tr>
+                <td>{{ blood.branch_zone}}</td>
+                <td>{{ blood.a_positive }}</td>
+                <td>{{ blood.a_negative }}</td>
+                <td>{{ blood.b_positive }}</td>
+                <td>{{ blood.b_negative }}</td>
+                <td>{{ blood.o_positive }}</td>
+                <td>{{ blood.o_negative }}</td>
+                <td>{{ blood.ab_positive }}</td>
+                <td>{{ blood.ab_negative }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

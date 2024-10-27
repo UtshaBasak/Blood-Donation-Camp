@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Information</title>
+    <style>
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        th, td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <table>
+                <h1>User Information</h1>
+
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Phone Number</th>
+                <th>Address</th>
+                <th>Blood Group</th>
+                <th>Zone</th>
+                <th>Is Donor</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for member in users %}
+                   {% if member.user.is_staff %}
+            <tr>
+                <td>{{ member.user.first_name}} {{member.user.last_name}}</td>
+                <td>{{ member.user.email }}</td>
+                <td>{{ member.phone_number }}</td>
+                <td>{{ member.address }}</td>
+                <td>{{ member.blood }}</td>
+                <td>{{ member.zone }}</td>
+                <td>{% if member.is_donor %}Yes{% else %}No{% endif %}</td>
+                <td><a href="{% url 'delete_user' member.user_id %}">Remove</a></td>
+
+            </tr>
+                  {% endif %}
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

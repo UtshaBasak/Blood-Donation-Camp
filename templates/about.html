@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Us - Blood Donation Service</title>
+    <style>
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f4f4;
+}
+
+header {
+    background-color: #ff4d4d;
+    padding: 10px 0;
+}
+
+nav ul {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+}
+
+nav ul li {
+    margin: 0 15px;
+}
+
+nav ul li a {
+    color: white;
+    text-decoration: none;
+    font-size: 18px;
+}
+
+main {
+    padding: 20px;
+    text-align: center;
+}
+
+h1, h2 {
+    color: #333;
+}
+
+.entity {
+    background-color: #fff;
+    margin: 20px auto;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    max-width: 600px;
+}
+
+.entity h3 {
+    color: #ff4d4d;
+}
+
+#contact ul {
+    list-style: none;
+    padding: 0;
+}
+
+#contact ul li {
+    margin: 10px 0;
+}
+
+#contact ul li a {
+    color: #ff4d4d;
+    text-decoration: none;
+}
+
+footer {
+    background-color: #333;
+    color: white;
+    text-align: center;
+    padding: 10px 0;
+    position: fixed;
+    width: 100%;
+    bottom: 0;
+}
+
+    </style>
+</head>
+<body>
+    <header>
+        <nav>
+            <ul>
+                <li><a href="/">Home</a></li>
+                {% if user.is_authenticated %}
+                        <li><a href="profile">My Profile</a></li>
+                                {% if user.is_superuser %}
+                                     <li><a href="dashboard" >Dashboard</a> </li>
+                                {% endif %}
+                         <li><a href="logout">Logout</a></li>
+
+                {% else%}
+                    <li><a href="login">Login</a></li>
+                    <li><a href="register">Register</a></li>
+                {% endif %}
+
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <section id="about">
+            <h1>About Our Blood Donation Service</h1>
+            <p>Welcome to our Blood Donation Service. We connect donors and receivers to ensure a seamless blood donation process.</p>
+        </section>
+        <section id="entities">
+            <div class="entity">
+                <h3>Donors</h3>
+                <p>Donors provide the life-saving blood. They register with their personal details and blood type.</p>
+            </div>
+            <div class="entity">
+                <h3>Receivers</h3>
+                <p>Receivers are individuals in need of blood. They can request blood based on their requirements.</p>
+            </div>
+            <div class="entity">
+                <h3>Blood Banks</h3>
+                <p>Blood banks store and manage blood donations. They ensure the availability and quality of blood.</p>
+            </div>
+            <div class="entity">
+                <h3>Blood Requests</h3>
+                <p>Blood requests are made by receivers. These requests are fulfilled by matching available blood from donors or blood banks.</p>
+            </div>
+        </section>
+        <section id="contact">
+            <h2>Contact Us</h2>
+            <p>If you have any questions or need further information, please feel free to contact us:</p>
+            <ul>
+                <li>Dhaka North Blood Bank
+Address: House No. 12, Road No. 5, Gulshan-1, Dhaka 1212, Bangladesh
+Contact Number: +880 1712 345678
+Email Address: dhakanorth@bloodbank.org</li>
+
+                <li>Dhaka South Blood Bank
+Address: 45/2, Dhanmondi Road No. 27, Dhaka 1209, Bangladesh
+Contact Number: +880 1712 987654
+Email Address: dhakasouth@bloodbank.org</li>
+
+            </ul>
+        </section>
+    </main>
+</body>
+</html>
