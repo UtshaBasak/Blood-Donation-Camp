@@ -1,1 +1,2 @@
-# Blood-Donation-Camp, a MySQL focused project
+# Blood-Donation-Camp
+A MySQL focused project
