@@ -1,195 +1,373 @@
-from django.contrib.auth import user_logged_in
-from django.shortcuts import render, redirect
+"""Request handlers for the Blood Donation Camp application.
+
+Two audiences share the same URL space:
+
+* Members register, manage their profile and search for available blood.
+* Branch managers (Django superusers) record stock movements and administer
+  the member list from the dashboard.
+
+Every view that reads or writes member data is behind ``@login_required``, and
+every manager-only view is behind ``@manager_required``.
+"""
+
+from functools import wraps
+
+from django.contrib import auth, messages
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
-from django.contrib import auth
-from django.contrib import messages
-from .models import UserProfile, BloodBagInfo, BloodBankInfo
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
+from django.db import transaction
+from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.http import require_POST
+
+from .models import (
+    BLOOD_GROUP_CHOICES,
+    GENDER_CHOICES,
+    ZONE_CHOICES,
+    BloodBagInfo,
+    BloodBankInfo,
+    UserProfile,
+)
+
+BLOOD_GROUPS = [value for value, _ in BLOOD_GROUP_CHOICES]
+ZONES = [value for value, _ in ZONE_CHOICES]
+GENDERS = [value for value, _ in GENDER_CHOICES]
+
+#: Choice lists every form template needs, so the options live in one place
+#: instead of being hand-written into each <select>.
+FORM_CONTEXT = {
+    'blood_groups': BLOOD_GROUP_CHOICES,
+    'zones': ZONE_CHOICES,
+    'genders': GENDER_CHOICES,
+}
 
 
-# Create your views here.
+# --------------------------------------------------------------------------- #
+# Helpers
+# --------------------------------------------------------------------------- #
+
+def manager_required(view):
+    """Allow only signed-in branch managers (superusers) through."""
+
+    @wraps(view)
+    @login_required
+    def wrapper(request, *args, **kwargs):
+        if not request.user.is_superuser:
+            messages.error(request, 'You do not have access to that page.')
+            return redirect('home')
+        return view(request, *args, **kwargs)
+
+    return wrapper
+
+
+def get_profile(user):
+    """Return the user's profile, or ``None`` if they never completed one.
+
+    Superusers created with ``createsuperuser`` have no profile, so callers
+    must handle the ``None`` case rather than assume one exists.
+    """
+    return UserProfile.objects.filter(user=user).select_related('user').first()
+
+
+def parse_quantity(raw):
+    """Parse a bag count from form input, or ``None`` when it is not valid."""
+    try:
+        quantity = int(raw)
+    except (TypeError, ValueError):
+        return None
+    return quantity if quantity > 0 else None
+
+
+# --------------------------------------------------------------------------- #
+# Public pages
+# --------------------------------------------------------------------------- #
 
 def home(request):
-    return render(request,'home.html')
+    return render(request, 'home.html')
 
-def login(request):
-    if request.method == "POST":
-        username = request.POST['username']
-        password = request.POST['password']
-        user = auth.authenticate(username=username, password=password)
-        if user is not None:
-            auth.login(request, user)
-            return redirect('/')
-        else:
-            messages.info(request, 'Invalid credentials')
-            return render(request, 'login.html')
-    elif request.user.is_authenticated:
-        return redirect('/')
-    return render(request, 'login.html')
-
-def register(request):
-    if request.method == 'POST':
-        fname = request.POST ['fname']
-        lname = request.POST ['lname']
-        email = request.POST['email']
-        phone = request.POST ['phone']
-        age = request.POST ['age']
-        address = request.POST ['address']
-        zone = request.POST ['zone']
-        blood = request.POST ['blood']
-        gender =request.POST['gender']
-
-        password = request.POST['password']
-        if User.objects.filter(username=email).exists():
-            messages.info(request,'Email already in use') ###
-            return render(request,'register.html')
-        else:
-            user = User.objects.create_user(first_name = fname, last_name = lname, email=email,password=password,username=email, is_staff = True)
-            profile = UserProfile.objects.create(user=user, phone_number=phone, age=age, address=address, gender=gender, zone = zone, blood=blood)
-
-            #login
-            user = auth.authenticate(username=email, password=password)
-            if user is not None:
-                auth.login(request, user)
-                return redirect('/')
-
-    elif request.user.is_authenticated:
-        return redirect('/')
-    return render(request,'register.html')
-
-def logout(request):
-    auth.logout(request)
-    return redirect('/')
-
-def profile(request):
-    if user_logged_in:
-        profile = UserProfile.objects.filter(user_id = request.user.id)
-        return render(request, 'user_profile.html', {'profile_info': profile})
-def dashboard(request):
-    if user_logged_in:
-        return render(request,'dashboard.html')
 
 def about(request):
-    return render(request, 'about.html')
-
-def update_bank(zone, blood_type, quantity):
-    blood_bank = BloodBankInfo.objects.get(branch_zone=zone)
-    if blood_type == 'A+':
-        blood_bank.a_positive += quantity
-    elif blood_type == 'A-':
-        blood_bank.a_negative += quantity
-    elif blood_type == 'B+':
-        blood_bank.b_positive += quantity
-    elif blood_type == 'B-':
-        blood_bank.b_negative += quantity
-    elif blood_type == 'O+':
-        blood_bank.o_positive += quantity
-    elif blood_type == 'O-':
-        blood_bank.o_negative += quantity
-    elif blood_type == 'AB+':
-        blood_bank.ab_positive += quantity
-    elif blood_type == 'AB-':
-        blood_bank.ab_negative += quantity
-
-    blood_bank.save()
+    return render(request, 'about.html', {'branches': BloodBankInfo.objects.all()})
 
 
-def entry(request):
+# --------------------------------------------------------------------------- #
+# Authentication
+# --------------------------------------------------------------------------- #
+
+def login_view(request):
+    if request.user.is_authenticated:
+        return redirect('home')
+
     if request.method == 'POST':
-        date = request.POST['date']
-        blood_type = request.POST['blood_type']
-        quantity = request.POST['quantity']
-        profile = UserProfile.objects.filter(user_id = request.user.id)
-        for working in profile:
-            zone = working.working_zone
+        username = request.POST.get('username', '').strip()
+        password = request.POST.get('password', '')
+        user = auth.authenticate(request, username=username, password=password)
+        if user is None:
+            messages.error(request, 'Invalid email or password.')
+            return render(request, 'login.html', {'username': username})
+        auth.login(request, user)
+        messages.success(request, 'Welcome back!')
+        return redirect('home')
 
-        #update bank info
-        update_bank(zone, blood_type, int(quantity))
+    return render(request, 'login.html')
 
-        BloodBagInfo.objects.create(blood_group=blood_type, date = date, quantity = quantity, branch = zone)
-        return redirect('details')
 
-    return render(request, 'blood_entry.html')
+def register(request):
+    if request.user.is_authenticated:
+        return redirect('home')
 
-def details(request):
-    blood = BloodBankInfo.objects.all()
-    return render(request, 'blood_details.html', {'blood_info': blood})
+    if request.method != 'POST':
+        return render(request, 'register.html', FORM_CONTEXT)
 
-def list(request):
-    users = UserProfile.objects.all()
-    return render(request, 'user_list.html', {'users': users})
+    fields = ('fname', 'lname', 'email', 'phone', 'age', 'address', 'zone', 'blood', 'gender')
+    data = {key: request.POST.get(key, '').strip() for key in fields}
+    password = request.POST.get('password', '')
+    context = {**FORM_CONTEXT, 'form_data': data}
 
-def delete_user(request, user_id):
-    user = User.objects.get(id=user_id)
-    user.is_staff = False
-    user.save()
-    return redirect('list')
+    errors = []
+    if not all(data.values()) or not password:
+        errors.append('All fields are required.')
+    if data['email'] and User.objects.filter(username__iexact=data['email']).exists():
+        errors.append('That email address is already registered.')
+    if data['zone'] and data['zone'] not in ZONES:
+        errors.append('Select a valid zone.')
+    if data['blood'] and data['blood'] not in BLOOD_GROUPS:
+        errors.append('Select a valid blood group.')
+    if data['gender'] and data['gender'] not in GENDERS:
+        errors.append('Select a valid gender.')
 
-def donate(request):
-    if request.method == 'POST':
-        date = request.POST['date']
-        blood_type = request.POST['blood_type']
-        quantity = int(request.POST['quantity']) * -1
-        profile = UserProfile.objects.filter(user_id = request.user.id)
-        for working in profile:
-            zone = working.working_zone
-        update_bank(zone, blood_type, int(quantity))
-        BloodBagInfo.objects.create(blood_group=blood_type, date = date, quantity = quantity, branch = zone)
-        return redirect('details')
-    return render(request, 'donate.html')
-
-def search(request):
-    if request.method == 'POST':
-        zone = request.POST['zone']
-        blood_group = request.POST['blood_group']
-        avail = BloodBankInfo.objects.filter(branch_zone=zone)
-
-        for i in avail:
-            if blood_group == 'a_positive':
-                count = i.a_positive
-                blood = 'A+'
-            elif blood_group == 'a_negative':
-                count = i.a_negative
-                blood = 'A-'
-            elif blood_group == 'b_positive':
-                count = i.b_positive
-                blood = 'B+'
-            elif blood_group == 'b_negative':
-                count = i.b_negative
-                blood = 'B-'
-            elif blood_group == 'o_positive':
-                count = i.o_positive
-                blood = 'O+'
-            elif blood_group == 'o_negative':
-                count = i.o_negative
-                blood = 'O-'
-            elif blood_group == 'ab_positive':
-                count = i.ab_positive
-                blood = 'AB+'
-            elif blood_group == 'ab_negative':
-                count = i.ab_negative
-                blood = 'AB-'
-
-        quantity = int(request.POST['quantity'])
-        if quantity<0:
-            return  render(request, 'search.html')
-        elif quantity<= count:
-                available = True
+    age = None
+    if data['age']:
+        try:
+            age = int(data['age'])
+        except ValueError:
+            errors.append('Age must be a number.')
         else:
-                available = False
+            if not 18 <= age <= 65:
+                errors.append('Donors must be between 18 and 65 years old.')
+
+    if password:
+        try:
+            validate_password(password)
+        except ValidationError as exc:
+            errors.extend(exc.messages)
+
+    if errors:
+        for error in errors:
+            messages.error(request, error)
+        return render(request, 'register.html', context)
+
+    with transaction.atomic():
+        user = User.objects.create_user(
+            username=data['email'],
+            email=data['email'],
+            password=password,
+            first_name=data['fname'],
+            last_name=data['lname'],
+        )
+        UserProfile.objects.create(
+            user=user,
+            phone_number=data['phone'],
+            age=age,
+            address=data['address'],
+            gender=data['gender'],
+            zone=data['zone'],
+            blood=data['blood'],
+        )
+
+    user = auth.authenticate(request, username=data['email'], password=password)
+    if user is not None:
+        auth.login(request, user)
+    messages.success(request, 'Your account has been created.')
+    return redirect('home')
 
 
-        donors = UserProfile.objects.filter(zone= zone, blood = blood, is_donor = True)
-        print(donors)
+@require_POST
+def logout_view(request):
+    auth.logout(request)
+    messages.success(request, 'You have been signed out.')
+    return redirect('home')
 
 
-        return render(request, 'search.html', {'availability': available, 'donors':donors})
+# --------------------------------------------------------------------------- #
+# Member area
+# --------------------------------------------------------------------------- #
 
-    return render(request, 'search.html')
+@login_required
+def profile(request):
+    return render(request, 'user_profile.html', {'profile': get_profile(request.user)})
 
 
-def update_active_status(request, user_id):
-    user = UserProfile.objects.get(user_id=user_id)
-    user.is_donor = not user.is_donor  # Toggle the status
-    user.save()
+@login_required
+@require_POST
+def toggle_donor_status(request):
+    """Opt the signed-in member in or out of the volunteer donor list."""
+    user_profile = get_profile(request.user)
+    if user_profile is None:
+        messages.error(request, 'Complete your profile before opting in as a donor.')
+        return redirect('profile')
+
+    user_profile.is_donor = not user_profile.is_donor
+    user_profile.save(update_fields=['is_donor'])
+    messages.success(
+        request,
+        'You are now listed as a volunteer donor.' if user_profile.is_donor
+        else 'You have been removed from the volunteer donor list.',
+    )
     return redirect('profile')
 
+
+@login_required
+def search(request):
+    """Check branch stock for a blood group and list volunteer donors nearby."""
+    context = {**FORM_CONTEXT, 'searched': False}
+
+    if request.method != 'POST':
+        return render(request, 'search.html', context)
+
+    zone = request.POST.get('zone', '')
+    blood_group = request.POST.get('blood_group', '')
+    quantity = parse_quantity(request.POST.get('quantity'))
+
+    if zone not in ZONES or blood_group not in BLOOD_GROUPS:
+        messages.error(request, 'Select a valid zone and blood group.')
+        return render(request, 'search.html', context)
+    if quantity is None:
+        messages.error(request, 'Enter how many bags you need (1 or more).')
+        return render(request, 'search.html', context)
+
+    branch = BloodBankInfo.objects.filter(branch_zone=zone).first()
+    if branch is None:
+        messages.warning(request, 'No blood bank is registered for that zone yet.')
+    in_stock = branch.stock_for(blood_group) if branch else 0
+
+    context.update({
+        'searched': True,
+        'availability': quantity <= in_stock,
+        'in_stock': in_stock,
+        'requested': quantity,
+        'selected_zone': zone,
+        'selected_blood_group': blood_group,
+        'donors': UserProfile.objects.filter(
+            zone=zone, blood=blood_group, is_donor=True, user__is_active=True
+        ).select_related('user'),
+    })
+    return render(request, 'search.html', context)
+
+
+# --------------------------------------------------------------------------- #
+# Manager area
+# --------------------------------------------------------------------------- #
+
+@manager_required
+def dashboard(request):
+    return render(request, 'dashboard.html', {
+        'branches': BloodBankInfo.objects.all(),
+        'member_count': User.objects.filter(is_active=True, is_superuser=False).count(),
+    })
+
+
+@manager_required
+def blood_details(request):
+    return render(request, 'blood_details.html', {
+        'blood_info': BloodBankInfo.objects.all(),
+        'recent_records': BloodBagInfo.objects.select_related('recorded_by')[:20],
+    })
+
+
+@manager_required
+def user_list(request):
+    members = (
+        UserProfile.objects
+        .filter(user__is_active=True, user__is_superuser=False)
+        .select_related('user')
+    )
+    return render(request, 'user_list.html', {'users': members})
+
+
+@manager_required
+@require_POST
+def deactivate_user(request, user_id):
+    """Remove a member from the active roster.
+
+    The account is deactivated rather than deleted so that the blood bag ledger
+    keeps pointing at a real user record.
+    """
+    member = get_object_or_404(User, id=user_id, is_superuser=False)
+    member.is_active = False
+    member.save(update_fields=['is_active'])
+    messages.success(request, 'The member has been removed from the roster.')
+    return redirect('user_list')
+
+
+def _record_movement(request, template, *, sign, success_message):
+    """Shared handler for collecting (``sign=1``) and issuing (``sign=-1``) blood."""
+    manager_profile = get_profile(request.user)
+    zone = manager_profile.working_zone if manager_profile else None
+    context = {**FORM_CONTEXT, 'working_zone': zone}
+
+    if not zone:
+        messages.error(
+            request,
+            'Your account has no working zone assigned. Set one in the Django '
+            'admin before recording stock movements.',
+        )
+        return render(request, template, context)
+
+    if request.method != 'POST':
+        return render(request, template, context)
+
+    date = request.POST.get('date', '')
+    blood_group = request.POST.get('blood_type', '')
+    quantity = parse_quantity(request.POST.get('quantity'))
+
+    if not date or blood_group not in BLOOD_GROUPS:
+        messages.error(request, 'Select a valid date and blood group.')
+        return render(request, template, context)
+    if quantity is None:
+        messages.error(request, 'Quantity must be 1 or more.')
+        return render(request, template, context)
+
+    try:
+        with transaction.atomic():
+            branch = BloodBankInfo.objects.select_for_update().get(branch_zone=zone)
+            branch.adjust_stock(blood_group, sign * quantity)
+            BloodBagInfo.objects.create(
+                blood_group=blood_group,
+                date=date,
+                quantity=sign * quantity,
+                branch=zone,
+                recorded_by=request.user,
+            )
+    except BloodBankInfo.DoesNotExist:
+        messages.error(request, 'No blood bank record exists for your working zone.')
+        return render(request, template, context)
+    except ValueError as exc:
+        messages.error(request, str(exc))
+        return render(request, template, context)
+
+    messages.success(request, success_message.format(quantity=quantity, blood_group=blood_group))
+    return redirect('blood_details')
+
+
+@manager_required
+def blood_entry(request):
+    """Record bags collected into the manager's branch."""
+    return _record_movement(
+        request,
+        'blood_entry.html',
+        sign=1,
+        success_message='Added {quantity} bag(s) of {blood_group} to stock.',
+    )
+
+
+@manager_required
+def blood_issue(request):
+    """Record bags issued out of the manager's branch."""
+    return _record_movement(
+        request,
+        'blood_issue.html',
+        sign=-1,
+        success_message='Issued {quantity} bag(s) of {blood_group}.',
+    )

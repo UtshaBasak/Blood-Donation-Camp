@@ -1,0 +1,305 @@
+/* ==========================================================================
+   Blood Donation Camp - shared stylesheet
+   Every page extends templates/base.html and uses the tokens below, so a
+   colour or spacing change here applies across the whole site.
+   ========================================================================== */
+
+:root {
+    --brand: #c62828;
+    --brand-dark: #8e0000;
+    --brand-light: #ffebee;
+    --accent: #1565c0;
+    --success: #2e7d32;
+    --warning: #ef6c00;
+    --danger: #c62828;
+
+    --ink: #1f2124;
+    --ink-muted: #5f6368;
+    --line: #e0e0e0;
+    --surface: #ffffff;
+    --page: #f5f6f8;
+
+    --radius: 10px;
+    --shadow: 0 1px 3px rgba(0, 0, 0, .08), 0 4px 16px rgba(0, 0, 0, .06);
+    --gutter: 16px;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    color: var(--ink);
+    background-color: var(--page);
+}
+
+h1, h2, h3 { line-height: 1.25; margin: 0 0 .5em; }
+h1 { font-size: 1.9rem; }
+h2 { font-size: 1.4rem; }
+h3 { font-size: 1.1rem; }
+p { margin: 0 0 1em; }
+a { color: var(--accent); }
+
+/* --- Layout --------------------------------------------------------------- */
+
+.site-main {
+    flex: 1;
+    width: 100%;
+    max-width: 1040px;
+    margin: 0 auto;
+    padding: 32px var(--gutter) 48px;
+}
+
+.narrow { max-width: 520px; margin: 0 auto; }
+
+.card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 24px;
+    margin-bottom: 24px;
+}
+
+.grid {
+    display: grid;
+    gap: 20px;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.stack > * + * { margin-top: 12px; }
+.text-center { text-align: center; }
+.muted { color: var(--ink-muted); }
+
+/* --- Header and navigation ------------------------------------------------ */
+
+.site-header {
+    background: var(--brand);
+    color: #fff;
+    box-shadow: var(--shadow);
+}
+
+.site-header__inner {
+    max-width: 1040px;
+    margin: 0 auto;
+    padding: 12px var(--gutter);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px 24px;
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #fff;
+    text-decoration: none;
+}
+
+.site-nav ul {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 18px;
+    margin: 0;
+    padding: 0;
+}
+
+.site-nav a {
+    color: #fff;
+    text-decoration: none;
+    padding: 6px 2px;
+    border-bottom: 2px solid transparent;
+}
+
+.site-nav a:hover,
+.site-nav a:focus-visible { border-bottom-color: #fff; }
+
+.site-nav__spacer { margin-left: auto; }
+
+.link-button {
+    background: none;
+    border: 0;
+    padding: 6px 2px;
+    font: inherit;
+    color: #fff;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+}
+
+.link-button:hover { border-bottom-color: #fff; }
+
+/* --- Hero ----------------------------------------------------------------- */
+
+.hero {
+    background: linear-gradient(135deg, var(--brand-dark), var(--brand));
+    color: #fff;
+    border-radius: var(--radius);
+    padding: 48px 24px;
+    text-align: center;
+    margin-bottom: 32px;
+}
+
+.hero h1 { color: #fff; }
+.hero p { font-size: 1.1rem; opacity: .92; margin-bottom: 0; }
+
+/* --- Forms ---------------------------------------------------------------- */
+
+.form-group { margin-bottom: 16px; }
+
+label {
+    display: block;
+    margin-bottom: 4px;
+    font-weight: 600;
+    font-size: .92rem;
+}
+
+input, select, textarea {
+    width: 100%;
+    padding: 10px 12px;
+    font: inherit;
+    color: var(--ink);
+    background: #fff;
+    border: 1px solid #c4c7cc;
+    border-radius: 6px;
+}
+
+input:focus, select:focus, textarea:focus {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+    border-color: var(--accent);
+}
+
+.help-text { font-size: .85rem; color: var(--ink-muted); }
+
+/* --- Buttons -------------------------------------------------------------- */
+
+.btn {
+    display: inline-block;
+    padding: 10px 20px;
+    font: inherit;
+    font-weight: 600;
+    color: #fff;
+    background: var(--brand);
+    border: 1px solid transparent;
+    border-radius: 6px;
+    cursor: pointer;
+    text-decoration: none;
+    text-align: center;
+}
+
+.btn:hover { background: var(--brand-dark); }
+.btn--secondary { background: var(--accent); }
+.btn--secondary:hover { background: #0d47a1; }
+.btn--ghost { background: transparent; color: var(--brand); border-color: var(--brand); }
+.btn--ghost:hover { background: var(--brand-light); }
+.btn--danger { background: var(--danger); }
+.btn--small { padding: 5px 12px; font-size: .88rem; }
+.btn--block { display: block; width: 100%; }
+
+/* --- Tables --------------------------------------------------------------- */
+
+.table-wrap { overflow-x: auto; }
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--surface);
+}
+
+th, td {
+    padding: 10px 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--line);
+    white-space: nowrap;
+}
+
+thead th {
+    background: var(--brand-light);
+    color: var(--brand-dark);
+    font-size: .85rem;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+}
+
+tbody tr:hover { background: #fafafa; }
+.table-empty { text-align: center; color: var(--ink-muted); font-style: italic; }
+
+/* --- Messages and badges -------------------------------------------------- */
+
+.messages { list-style: none; margin: 0 0 20px; padding: 0; }
+
+.messages li {
+    padding: 12px 16px;
+    margin-bottom: 8px;
+    border-radius: 6px;
+    border-left: 4px solid var(--ink-muted);
+    background: #eceff1;
+}
+
+.messages .success { border-left-color: var(--success); background: #e8f5e9; }
+.messages .error   { border-left-color: var(--danger);  background: var(--brand-light); }
+.messages .warning { border-left-color: var(--warning); background: #fff3e0; }
+.messages .info    { border-left-color: var(--accent);  background: #e3f2fd; }
+
+.badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 999px;
+    font-size: .8rem;
+    font-weight: 600;
+    background: #eceff1;
+    color: var(--ink-muted);
+}
+
+.badge--yes { background: #e8f5e9; color: var(--success); }
+.badge--no  { background: var(--brand-light); color: var(--brand-dark); }
+.badge--blood { background: var(--brand); color: #fff; }
+
+/* --- Profile and definition lists ----------------------------------------- */
+
+.detail-list { margin: 0; }
+.detail-list dt { font-weight: 600; font-size: .85rem; color: var(--ink-muted); }
+.detail-list dd { margin: 0 0 12px; }
+
+/* --- Footer --------------------------------------------------------------- */
+
+.site-footer {
+    background: #24272b;
+    color: #cfd2d6;
+    text-align: center;
+    padding: 20px var(--gutter);
+    font-size: .9rem;
+}
+
+.site-footer p { margin: 0; }
+
+/* --- Small screens -------------------------------------------------------- */
+
+@media (max-width: 600px) {
+    .site-header__inner { flex-direction: column; align-items: flex-start; }
+    .site-nav__spacer { margin-left: 0; }
+    .hero { padding: 32px 16px; }
+    h1 { font-size: 1.5rem; }
+}
+
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
+}

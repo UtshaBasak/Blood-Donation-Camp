@@ -1,160 +1,59 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>User Profile</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 24px;
-            background-color: #800000;
-        }
+{% extends "base.html" %}
 
-        nav ul {
-            list-style: none;
-            padding: 0;
-            display: flex;
-            justify-content: center;
-        }
+{% block title %}My Profile - Blood Donation Camp{% endblock %}
 
-        nav ul li {
-            margin: 0 15px;
-        }
+{% block content %}
+<div class="narrow">
+    <div class="card">
+        <h1 class="text-center">{% if user.is_superuser %}Manager profile{% else %}My profile{% endif %}</h1>
 
-        nav ul li a {
-            color: white;
-            text-decoration: none;
-            font-size: 18px;
-        }
-
-
-
-
-        .container {
-            background-color: #eae4e4;
-            padding: 30px;
-            border-radius: 5px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            max-width: 500px;
-            margin: 0 auto;
-        }
-
-        h1 {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        p {
-            text-align: center;
-            color: #888;
-            margin-bottom: 20px;
-        }
-
-        .profile-info {
-            margin-bottom: 20px;
-        }
-
-        .profile-info label {
-            display: block;
-            font-weight: bold;
-        }
-
-        .profile-info span {
-            display: block;
-            margin-bottom: 10px;
-        }
-
-        .actions {
-            text-align: center;
-        }
-
-        .actions button {
-            background-color: #3498db;
-            color: #fff;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            margin: 10px;
-        }
-
-        .actions button:hover {
-            background-color: #2980b9;
-        }
-    </style>
-</head>
-<body>
-
-        <nav>
-            <ul>
-                <li><a href="/">Home</a></li>
-                {% if user.is_authenticated %}
-                                {% if user.is_superuser %}
-                                     <li><a href="dashboard" >Dashboard</a> </li>
-                                {% endif %}
-                         <li><a href="logout">Logout</a></li>
-                {% else%}
-                    <li><a href="login">Login</a></li>
-                    <li><a href="register">Register</a></li>
-                {% endif %}
-
-            </ul>
-        </nav>
-
-
-    <div class="container">
-        {% if user.is_superuser %}
-                    <h1>Admin Profile</h1>
-        {% else %}
-                      <h1>User Profile</h1>
-        {% endif %}
-
-        <div class="profile-info">
-            {% for profile in profile_info %}
-            <label>Name:</label>
-            <span id="name">{{ profile.user.first_name}} {{profile.user.last_name}}</span>
-            <label>Email:</label>
-            <span id="email">{{ profile.user.email }}</span>
-            <label>Contact Number:</label>
-            <span id="phone">{{ profile.phone_number }}</span>
-            <label>Gender:</label>
-            <span id="gender">{{ profile.gender }}</span>
-            <label>Blood Group:</label>
-            <span id="blood">{{ profile.blood }}</span>
-            <label>Age:</label>
-            <span id="age">{{ profile.age }}</span>
-            <label>Address:</label>
-            <span id="address">{{ profile.address }}</span>
-                {% if not profile.user.is_superuser %}
-                    <label>Zone:</label>
-                    <span id="zone">{{ profile.zone }}</span>
+        {% if profile %}
+            <dl class="detail-list">
+                <dt>Name</dt><dd>{{ profile.full_name }}</dd>
+                <dt>Email</dt><dd>{{ profile.user.email }}</dd>
+                <dt>Contact number</dt><dd>{{ profile.phone_number }}</dd>
+                <dt>Gender</dt><dd>{{ profile.get_gender_display }}</dd>
+                <dt>Blood group</dt><dd><span class="badge badge--blood">{{ profile.blood }}</span></dd>
+                <dt>Age</dt><dd>{{ profile.age }}</dd>
+                <dt>Address</dt><dd>{{ profile.address }}</dd>
+                {% if user.is_superuser %}
+                    <dt>Working zone</dt>
+                    <dd>{{ profile.get_working_zone_display|default:"Not assigned" }}</dd>
                 {% else %}
-                    <label>Working Zone:</label>
-                    <span id="working_zone">{{ profile.working_zone }}</span>
+                    <dt>Zone</dt><dd>{{ profile.get_zone_display }}</dd>
+                    <dt>Volunteer donor</dt>
+                    <dd>
+                        {% if profile.is_donor %}
+                            <span class="badge badge--yes">Yes</span>
+                        {% else %}
+                            <span class="badge badge--no">No</span>
+                        {% endif %}
+                    </dd>
                 {% endif %}
-<!--            Updating donor status    -->
-                    <form method="POST" action="{% url 'update_active_status' user.id %}">
-                        {% csrf_token %}
-                        <label>Is Donor:</label>
-                       <span id="is_donor">{{ profile.is_donor }}</span>
-                        <input type="hidden" name="status" value="{{ profile.is_donor }}">
-                        <button type="submit">Change Donor Status</button>
-                    </form>
+            </dl>
 
-
-            {% endfor %}
-        </div>
-
-             {% if not user.is_superuser %}
-            <div>
-<!--                <a href="donate_blood"><button style="background-color:green;color:white;font-size:medium;">I want to donate Blood</button></a>-->
-                <a href="search"><button style="background-color:blue;color:white;font-size:medium;">Search for Blood</button></a>
-            </div>
+            {% if not user.is_superuser %}
+                <form method="post" action="{% url 'toggle_donor_status' %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn--ghost">
+                        {% if profile.is_donor %}Leave the donor list{% else %}Join the donor list{% endif %}
+                    </button>
+                </form>
+                <p class="help-text">Volunteer donors are shown to members searching for their
+                   blood group in their zone, along with their phone number and email.</p>
             {% endif %}
-
-
-
+        {% else %}
+            <p class="muted">No profile details are attached to this account yet. Accounts created
+               with <code>createsuperuser</code> need a profile added from the Django admin.</p>
+        {% endif %}
     </div>
 
-</body>
-</html>
+    <div class="card text-center">
+        {% if user.is_superuser %}
+            <a class="btn btn--secondary" href="{% url 'dashboard' %}">Go to dashboard</a>
+        {% else %}
+            <a class="btn btn--secondary" href="{% url 'search' %}">Search for blood</a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

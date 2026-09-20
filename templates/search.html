@@ -1,87 +1,82 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Search Users</title>
-        <style>
-        table {
-            border-collapse: collapse;
-            width: 100%;
-        }
+{% extends "base.html" %}
 
-        th, td {
-            border: 1px solid black;
-            padding: 8px;
-            text-align: left;
-        }
+{% block title %}Find Blood - Blood Donation Camp{% endblock %}
 
-        th {
-            background-color: #f2f2f2;
-        }
-    </style>
-</head>
-<body>
-<section style="text-align:center;" >
-    <h1>Looking for Blood</h1>
+{% block content %}
+<div class="card narrow">
+    <h1 class="text-center">Looking for blood</h1>
+
     <form method="post" action="{% url 'search' %}">
         {% csrf_token %}
-        <label for="zone">Zone:</label>
-        <select name="zone" id="zone">
-            <option value="North">North</option>
-            <option value="South">South</option>
-        </select>
-<br><br>
-        <label for="blood_group">Blood Group:</label>
-        <select name="blood_group" id="blood_group">
-            <option value="a_positive">A+</option>
-            <option value="a_negative">A-</option>
-            <option value="b_positive">B+</option>
-            <option value="b_negative">B-</option>
-            <option value="o_positive">O+</option>
-            <option value="o_negative">O-</option>
-            <option value="ab_positive">AB+</option>
-            <option value="ab_negative">AB-</option>
+        <div class="form-group">
+            <label for="zone">Zone</label>
+            <select id="zone" name="zone" required>
+                {% for value, label in zones %}
+                    <option value="{{ value }}" {% if selected_zone == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
             </select>
-<br><br>
-        <label for="quantity">Quantity:</label>
-        <input type="number" name="quantity" id="quantity">
-<br><br>
-        <button type="submit">Search</button>
+        </div>
+        <div class="form-group">
+            <label for="blood_group">Blood group</label>
+            <select id="blood_group" name="blood_group" required>
+                {% for value, label in blood_groups %}
+                    <option value="{{ value }}" {% if selected_blood_group == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="quantity">Bags needed</label>
+            <input type="number" id="quantity" name="quantity" min="1"
+                   value="{{ requested|default:1 }}" required>
+        </div>
+        <button type="submit" class="btn btn--block">Search</button>
     </form>
-    {% if availability %}
-        <h4>Your desired blood is available</h4>
-    {% else %}
-        <h4>Sorry your desired blood is not available.. </h4>
-    {% endif %}
+</div>
 
-<br><br>
+{% if searched %}
+    <div class="card">
+        {% if availability %}
+            <h2>Available</h2>
+            <p>The {{ selected_zone }} branch holds <strong>{{ in_stock }}</strong> bag(s) of
+               {{ selected_blood_group }}, enough for your request of {{ requested }}.</p>
+        {% else %}
+            <h2>Not enough stock</h2>
+            <p>The {{ selected_zone }} branch holds <strong>{{ in_stock }}</strong> bag(s) of
+               {{ selected_blood_group }}, but you asked for {{ requested }}. The volunteer donors
+               below may be able to help.</p>
+        {% endif %}
+    </div>
 
-  <table>
-        <h1>Available Donors</h1>
-        <thead>
-            <tr>
-                <th>Donor Name</th>
-                <th>Blood Group</th>
-                <th>Email</th>
-                <th>Phone Number</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for donor in donors %}
-
-            <tr>
-                <td>{{ donor.user.first_name}}{{ donor.user.last_name}}</td>
-                <td>{{ donor.blood }}</td>
-                <td>{{ donor.user.email }}</td>
-                <td>{{ donor.phone_number }}</td>
-
-            {% endfor %}
-        </tbody>
-    </table>
-
-
-</section>
-
-</body>
-</html>
+    <div class="card">
+        <h2>Volunteer donors in {{ selected_zone }}</h2>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th scope="col">Donor name</th>
+                        <th scope="col">Blood group</th>
+                        <th scope="col">Email</th>
+                        <th scope="col">Phone number</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for donor in donors %}
+                        <tr>
+                            <td>{{ donor.full_name }}</td>
+                            <td><span class="badge badge--blood">{{ donor.blood }}</span></td>
+                            <td><a href="mailto:{{ donor.user.email }}">{{ donor.user.email }}</a></td>
+                            <td>{{ donor.phone_number }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="4" class="table-empty">
+                                No volunteer donors are listed for {{ selected_blood_group }} in this zone.
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endif %}
+{% endblock %}

@@ -1,165 +1,83 @@
-<!DOCTYPE html>
-<html>
-<head>
+{% extends "base.html" %}
 
-    <title>Blood Donation System</title>
+{% block title %}Register - Blood Donation Camp{% endblock %}
 
-<style>
+{% block content %}
+<div class="narrow">
+    <div class="card">
+        <h1 class="text-center">Create your profile</h1>
+        <p class="text-center muted">Join the camp to search for blood and volunteer as a donor.</p>
 
-body {
-    font-family: Arial, sans-serif;
-    margin: 0;
-    padding: 24px;
-    background-color: #800000;
-}
-
-.container {
-    background-color: #eae4e4;
-    padding: 30px;
-    border-radius: 5px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    max-width: 500px;
-    margin: 0 auto;
-}
-
-h1 {
-    text-align: center;
-    margin-bottom: 20px;
-}
-
-p {
-    text-align: center;
-    color: #888;
-    margin-bottom: 20px;
-}
-
-.form-group {
-    margin-bottom: 15px;
-}
-
-label {
-    display: block;
-    margin-bottom: 5px;
-}
-
-input {
-    width: 100%;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 3px;
-}
-
-input[type="date"] {
-    width: 100%;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 3px;
-}
-
-button {
-    background-color: #3498db;
-    color: #fff;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    margin-top: 20px;
-}
-
-button:hover {
-    background-color: #2980b9;
-}
-
-</style>
-</head>
-<body>
-    <div class = "container">
-        <h1>Welcome to<br>Blood Donation Camp</h1>
-        <p>Sign up to create your profile!</p>
-        <form action = "register" method = "post">
+        <form method="post" action="{% url 'register' %}">
             {% csrf_token %}
 
-            <div class = "form-group">
-                <label for = "fname">First Name:</label>
-                <input type = "text" name = "fname" id = "fname" required> <br>
-            </div>
-            <div class = "form-group">
-                <label for = "lname">Last Name:</label>
-                <input type = "text" name = "lname" id = "lname" required> <br>
-            </div>
-
-            <div class = "form-group">
-                <label for = "email">Email:</label>
-                <input type = "email" name = "email" id = "email" required>
-            </div>
-
-            <div class = "form-group">
-                <label for = "password">Password:</label>
-                <input type = "password" name = "password" id = "password" required>
-            </div>
-
-            <div class = "form-group">
-                <label for = "phone">Contact Number:</label>
-                <input type = "number" name = "phone" id = "phone" required>
-            </div>
-
-            <div class = "form-group">
-                <label for="gender">Gender:</label>
-                <select name="gender" id="gender" required>
-                    <option value="">Select your Gender</option>
-                    <option value="Male">Male</option>
-                    <option value="Female">Female</option>
-                </select>
-            </div>
-
-            <div class = "form-group">
-                <label for = "age">Age:</label>
-                <input type = "number" name = "age" id = "age" required>
-            </div>
-
-            <div class = "form-group">
-                <label for = "address">Address:</label>
-                <input type = "text" name = "address" id = "address" required>
-            </div>
-
-
-            <div class = "form-group">
-                <label for="zone">Zone:</label>
-                <select name="zone" id="zone" required>
-                    <option value="">Select your zone</option>
-                    <option value="North">Dhaka North</option>
-                    <option value="South">Dhaka South</option>
-                </select>
-            </div>
-
-
             <div class="form-group">
-                <label for="blood">Blood Group:</label>
-                <select name="blood" id="blood" required>
+                <label for="fname">First name</label>
+                <input type="text" id="fname" name="fname" value="{{ form_data.fname|default:'' }}" required>
+            </div>
+            <div class="form-group">
+                <label for="lname">Last name</label>
+                <input type="text" id="lname" name="lname" value="{{ form_data.lname|default:'' }}" required>
+            </div>
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" value="{{ form_data.email|default:'' }}"
+                       autocomplete="email" required>
+                <span class="help-text">You will sign in with this address.</span>
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" autocomplete="new-password" required>
+                <span class="help-text">At least 8 characters, not entirely numeric.</span>
+            </div>
+            <div class="form-group">
+                <label for="phone">Contact number</label>
+                <input type="tel" id="phone" name="phone" value="{{ form_data.phone|default:'' }}" required>
+            </div>
+            <div class="form-group">
+                <label for="gender">Gender</label>
+                <select id="gender" name="gender" required>
+                    <option value="">Select your gender</option>
+                    {% for value, label in genders %}
+                        <option value="{{ value }}" {% if form_data.gender == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="age">Age</label>
+                <input type="number" id="age" name="age" min="18" max="65"
+                       value="{{ form_data.age|default:'' }}" required>
+                <span class="help-text">Donors must be between 18 and 65 years old.</span>
+            </div>
+            <div class="form-group">
+                <label for="address">Address</label>
+                <input type="text" id="address" name="address" value="{{ form_data.address|default:'' }}" required>
+            </div>
+            <div class="form-group">
+                <label for="zone">Zone</label>
+                <select id="zone" name="zone" required>
+                    <option value="">Select your zone</option>
+                    {% for value, label in zones %}
+                        <option value="{{ value }}" {% if form_data.zone == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="blood">Blood group</label>
+                <select id="blood" name="blood" required>
                     <option value="">Select your blood group</option>
-                    <option value="A+">A+</option>
-                    <option value="A-">A-</option>
-                    <option value="B+">B+</option>
-                    <option value="B-">B-</option>
-                    <option value="AB+">AB+</option>
-                    <option value="AB-">AB-</option>
-                    <option value="O+">O+</option>
-                    <option value="O-">O-</option>
+                    {% for value, label in blood_groups %}
+                        <option value="{{ value }}" {% if form_data.blood == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
                 </select>
             </div>
 
-<!--            <div class="form-group">-->
-<!--                <label for = "birth">Date of Birth:</label>-->
-<!--                <input type = "date" name = "birth" id = "birth" required>-->
-<!--            </div>-->
+            <button type="submit" class="btn btn--block">Sign up</button>
+        </form>
 
-
-            <button type = "submit">Sign Up</button>
-        </form> <br> <br>
-        <p>
-            If you are already a member, <br>
-            <a href="login">Login</a> to continue
+        <p class="text-center muted" style="margin-top:20px">
+            Already a member? <a href="{% url 'login' %}">Login</a> to continue.
         </p>
     </div>
-</body>
-</html>
+</div>
+{% endblock %}

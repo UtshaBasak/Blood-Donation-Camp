@@ -1,116 +1,61 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Blood Bank Dashboard</title>
-    <style>
-        body {
-            margin: 0;
-            font-family: Arial, sans-serif;
-            background-color: #800000;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            height: 100vh;
+{% extends "base.html" %}
 
-        }
+{% block title %}Dashboard - Blood Donation Camp{% endblock %}
 
-        nav {
-            background-color: #f5f5f5;
-            padding: 10px;
-            display: flex;
-            width: 100%;
-            justify-content: space-between;
-            align-items: center;
-            width: 100%;
+{% block content %}
+<h1>Manager dashboard</h1>
+<p class="muted">
+    Signed in as {{ user.get_full_name|default:user.username }}.
+    {{ member_count }} active member{{ member_count|pluralize }} registered.
+</p>
 
-        }
-
-        nav ul {
-            list-style: none;
-            padding: 0;
-            display: flex;
-            align-items: center;
-        }
-
-        nav ul li {
-            margin: 0 15px;
-        }
-
-        nav ul li a {
-            color: #333;
-            text-decoration: none;
-            font-size: 18px;
-        }
-
-        .dashboard {
-            padding: 20px;
-            width: 80%;
-            max-width: 800px;
-        }
-
-        .dashboard-section {
-            width: 300px;
-            padding: 20px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            margin-bottom: 20px;
-            background-color: #f5f5f5;
-        }
-
-        .dashboard-section h2 {
-            text-align: center;
-            margin-bottom: 10px;
-        }
-
-        .dashboard-section ul {
-            list-style: none;
-            padding: 0;
-        }
-
-        .dashboard-section li {
-            margin-bottom: 10px;
-        }
-
-        .dashboard-section a {
-            text-decoration: none;
-            color: #333;
-            font-weight: bold;
-        }
-
-        .dashboard-section a:hover {
-            text-decoration: underline;
-        }
-    </style>
-</head>
-<body>
-    <nav>
-        <ul>
-            <li><a href="/">Home</a></li>
-            {% if user.is_authenticated %}
-                <li><a href="profile">My Profile</a></li>
-                {% if user.is_superuser %}
-                    <li><a href="dashboard" >Dashboard</a> </li>
-                {% endif %}
-                <li><a href="logout">Logout</a></li>
-            {% else%}
-                <li><a href="login">Login</a></li>
-                <li><a href="register">Register</a></li>
-            {% endif %}
+<div class="grid">
+    <article class="card">
+        <h2>Record stock</h2>
+        <ul class="stack">
+            <li><a href="{% url 'blood_entry' %}">Blood entry &mdash; add collected bags</a></li>
+            <li><a href="{% url 'blood_issue' %}">Issue blood &mdash; hand bags out</a></li>
         </ul>
-    </nav>
+    </article>
+    <article class="card">
+        <h2>Review</h2>
+        <ul class="stack">
+            <li><a href="{% url 'blood_details' %}">Blood bank stock and recent records</a></li>
+            <li><a href="{% url 'user_list' %}">Member list</a></li>
+            <li><a href="/admin/">Django admin</a></li>
+        </ul>
+    </article>
+</div>
 
-    <section class="dashboard">
-        <div class="dashboard-section">
-            <h2>Manager Dashboard</h2>
-            <ul>
-                <li><a href="entry">Blood Entry</a></li>
-                <li><a href="donate">Blood Giving away</a></li>
-                <li><a href="list">User List</a></li>
-                <li><a href="details">Blood Bank Details</a></li>
-            </ul>
-        </div>
-    </section>
-</body>
-</html>
+<div class="card">
+    <h2>Stock at a glance</h2>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th scope="col">Branch</th>
+                    <th scope="col">A+</th><th scope="col">A-</th>
+                    <th scope="col">B+</th><th scope="col">B-</th>
+                    <th scope="col">O+</th><th scope="col">O-</th>
+                    <th scope="col">AB+</th><th scope="col">AB-</th>
+                    <th scope="col">Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for branch in branches %}
+                    <tr>
+                        <td>{{ branch.get_branch_zone_display }}</td>
+                        <td>{{ branch.a_positive }}</td><td>{{ branch.a_negative }}</td>
+                        <td>{{ branch.b_positive }}</td><td>{{ branch.b_negative }}</td>
+                        <td>{{ branch.o_positive }}</td><td>{{ branch.o_negative }}</td>
+                        <td>{{ branch.ab_positive }}</td><td>{{ branch.ab_negative }}</td>
+                        <td><strong>{{ branch.total_bags }}</strong></td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="10" class="table-empty">No branches have been created yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

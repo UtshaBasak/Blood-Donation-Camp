@@ -1,21 +1,21 @@
 {% extends "base.html" %}
 
-{% block title %}Blood Entry - Blood Donation Camp{% endblock %}
+{% block title %}Issue Blood - Blood Donation Camp{% endblock %}
 
 {% block content %}
 <div class="narrow">
     <div class="card">
-        <h1 class="text-center">Blood entry</h1>
+        <h1 class="text-center">Issue blood</h1>
         <p class="text-center muted">
-            Record bags collected into
+            Record bags handed out from
             {% if working_zone %}the {{ working_zone }} branch{% else %}your branch{% endif %}.
         </p>
 
         {% if working_zone %}
-            <form method="post" action="{% url 'blood_entry' %}">
+            <form method="post" action="{% url 'blood_issue' %}">
                 {% csrf_token %}
                 <div class="form-group">
-                    <label for="date">Collection date</label>
+                    <label for="date">Issue date</label>
                     <input type="date" id="date" name="date" required>
                 </div>
                 <div class="form-group">
@@ -30,7 +30,7 @@
                     <label for="quantity">Number of bags</label>
                     <input type="number" id="quantity" name="quantity" min="1" value="1" required>
                 </div>
-                <button type="submit" class="btn btn--block">Add to stock</button>
+                <button type="submit" class="btn btn--block">Issue from stock</button>
             </form>
         {% endif %}
     </div>

@@ -1,59 +1,56 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>User Information</title>
-    <style>
-        table {
-            border-collapse: collapse;
-            width: 100%;
-        }
+{% extends "base.html" %}
 
-        th, td {
-            border: 1px solid black;
-            padding: 8px;
-            text-align: left;
-        }
+{% block title %}Members - Blood Donation Camp{% endblock %}
 
-        th {
-            background-color: #f2f2f2;
-        }
-    </style>
-</head>
-<body>
-    <table>
-                <h1>User Information</h1>
+{% block content %}
+<h1>Member list</h1>
+<p class="muted">Removing a member deactivates their account; their past stock records are kept.</p>
 
-        <thead>
-            <tr>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Phone Number</th>
-                <th>Address</th>
-                <th>Blood Group</th>
-                <th>Zone</th>
-                <th>Is Donor</th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for member in users %}
-                   {% if member.user.is_staff %}
-            <tr>
-                <td>{{ member.user.first_name}} {{member.user.last_name}}</td>
-                <td>{{ member.user.email }}</td>
-                <td>{{ member.phone_number }}</td>
-                <td>{{ member.address }}</td>
-                <td>{{ member.blood }}</td>
-                <td>{{ member.zone }}</td>
-                <td>{% if member.is_donor %}Yes{% else %}No{% endif %}</td>
-                <td><a href="{% url 'delete_user' member.user_id %}">Remove</a></td>
+<div class="card">
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th scope="col">Name</th>
+                    <th scope="col">Email</th>
+                    <th scope="col">Phone number</th>
+                    <th scope="col">Address</th>
+                    <th scope="col">Blood group</th>
+                    <th scope="col">Zone</th>
+                    <th scope="col">Donor</th>
+                    <th scope="col"><span class="visually-hidden">Actions</span></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for member in users %}
+                    <tr>
+                        <td>{{ member.full_name }}</td>
+                        <td>{{ member.user.email }}</td>
+                        <td>{{ member.phone_number }}</td>
+                        <td>{{ member.address }}</td>
+                        <td><span class="badge badge--blood">{{ member.blood }}</span></td>
+                        <td>{{ member.get_zone_display }}</td>
+                        <td>
+                            {% if member.is_donor %}
+                                <span class="badge badge--yes">Yes</span>
+                            {% else %}
+                                <span class="badge badge--no">No</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <form method="post" action="{% url 'deactivate_user' member.user_id %}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn--danger btn--small">Remove</button>
+                            </form>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="8" class="table-empty">No active members yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
 
-            </tr>
-                  {% endif %}
-            {% endfor %}
-        </tbody>
-    </table>
-</body>
-</html>
+<p><a class="btn btn--ghost" href="{% url 'dashboard' %}">Back to dashboard</a></p>
+{% endblock %}

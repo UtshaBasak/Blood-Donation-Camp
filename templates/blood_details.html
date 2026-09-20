@@ -1,57 +1,73 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Blood Details</title>
-    <style>
-        table {
-            border-collapse: collapse;
-            width: 100%;
-        }
+{% extends "base.html" %}
 
-        th, td {
-            border: 1px solid black;
-            padding: 8px;
-            text-align: left;
-        }
+{% block title %}Blood Bank Stock - Blood Donation Camp{% endblock %}
 
-        th {
-            background-color: #f2f2f2;
-        }
-    </style>
-</head>
-<body>
-    <table>
-        <h1>Blood Bank Information</h1>
-        <thead>
-            <tr>
-                <th>Branch Name</th>
-                <th>A+</th>
-                <th>A-</th>
-                <th>B+</th>
-                <th>B-</th>
-                <th>O+</th>
-                <th>O-</th>
-                <th>AB+</th>
-                <th>AB-</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for blood in blood_info %}
-            <tr>
-                <td>{{ blood.branch_zone}}</td>
-                <td>{{ blood.a_positive }}</td>
-                <td>{{ blood.a_negative }}</td>
-                <td>{{ blood.b_positive }}</td>
-                <td>{{ blood.b_negative }}</td>
-                <td>{{ blood.o_positive }}</td>
-                <td>{{ blood.o_negative }}</td>
-                <td>{{ blood.ab_positive }}</td>
-                <td>{{ blood.ab_negative }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</body>
-</html>
+{% block content %}
+<h1>Blood bank information</h1>
+
+<div class="card">
+    <h2>Current stock by branch</h2>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th scope="col">Branch</th>
+                    <th scope="col">A+</th><th scope="col">A-</th>
+                    <th scope="col">B+</th><th scope="col">B-</th>
+                    <th scope="col">O+</th><th scope="col">O-</th>
+                    <th scope="col">AB+</th><th scope="col">AB-</th>
+                    <th scope="col">Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for blood in blood_info %}
+                    <tr>
+                        <td>{{ blood.get_branch_zone_display }}</td>
+                        <td>{{ blood.a_positive }}</td><td>{{ blood.a_negative }}</td>
+                        <td>{{ blood.b_positive }}</td><td>{{ blood.b_negative }}</td>
+                        <td>{{ blood.o_positive }}</td><td>{{ blood.o_negative }}</td>
+                        <td>{{ blood.ab_positive }}</td><td>{{ blood.ab_negative }}</td>
+                        <td><strong>{{ blood.total_bags }}</strong></td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="10" class="table-empty">No branches have been created yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="card">
+    <h2>Recent stock movements</h2>
+    <p class="help-text">A positive quantity is blood collected into the branch; a negative
+       quantity is blood issued out of it.</p>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th scope="col">Date</th>
+                    <th scope="col">Branch</th>
+                    <th scope="col">Blood group</th>
+                    <th scope="col">Quantity</th>
+                    <th scope="col">Recorded by</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for record in recent_records %}
+                    <tr>
+                        <td>{{ record.date }}</td>
+                        <td>{{ record.get_branch_display }}</td>
+                        <td><span class="badge badge--blood">{{ record.blood_group }}</span></td>
+                        <td>{{ record.quantity }}</td>
+                        <td>{{ record.recorded_by.get_full_name|default:record.recorded_by.username|default:"—" }}</td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="5" class="table-empty">No stock movements recorded yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<p><a class="btn btn--ghost" href="{% url 'dashboard' %}">Back to dashboard</a></p>
+{% endblock %}
