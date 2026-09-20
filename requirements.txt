@@ -1,0 +1,8 @@
+# Core framework
+Django>=5.1,<5.2
+
+# MySQL driver (default database backend for this project)
+mysqlclient>=2.2
+
+# Reads configuration from a local .env file
+python-dotenv>=1.0
