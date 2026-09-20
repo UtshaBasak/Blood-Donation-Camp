@@ -1,5 +1,5 @@
 # Core framework
-Django>=5.1,<5.2
+Django>=6.1.1,<6.2
 
 # MySQL driver (default database backend for this project)
 mysqlclient>=2.2
