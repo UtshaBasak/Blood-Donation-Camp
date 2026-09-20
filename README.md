@@ -298,8 +298,3 @@ protection.
 ## License
 
 Released under the [MIT License](LICENSE).
-
-## Acknowledgements
-
-Developed by [Utsha Basak](https://github.com/UtshaBasak) as a CSE370 Database Systems
-course project. The `cse370` package name preserves that origin.
