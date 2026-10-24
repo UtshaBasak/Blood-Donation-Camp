@@ -36,3 +36,6 @@ htmlcov/
 *.swp
 .DS_Store
 Thumbs.db
+
+# Postman editor instruction files (local tooling)
+.github/instructions/
