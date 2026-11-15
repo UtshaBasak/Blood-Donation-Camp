@@ -23,6 +23,8 @@ jobs:
       pull-requests: write
     steps:
       - name: PR Agent
+        # Advisory only: a busy or rate-limited Gemini API must not turn the PR red.
+        continue-on-error: true
         uses: the-pr-agent/pr-agent@e673a02076ce09a4726c3d0c3cc85780e59ca52b # v0.50.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
