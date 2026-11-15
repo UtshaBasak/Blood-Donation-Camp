@@ -29,7 +29,11 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GOOGLE_AI_STUDIO.GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          CONFIG.MODEL: gemini/gemini-3.8-flash
+          CONFIG.MODEL: gemini/gemini-3.5-flash-lite
+          # Not in PR-Agent's built-in model table, so give its context size.
+          CONFIG.CUSTOM_MODEL_MAX_TOKENS: 1048576
           CONFIG.FALLBACK_MODELS: "[]"
-          # Review and suggest only; never rewrite the PR description.
+          # Never rewrite the PR description.
           GITHUB_ACTION_CONFIG.AUTO_DESCRIBE: "false"
+          # Review automatically; ask for code suggestions with /improve (saves free-tier quota).
+          GITHUB_ACTION_CONFIG.AUTO_IMPROVE: "false"
