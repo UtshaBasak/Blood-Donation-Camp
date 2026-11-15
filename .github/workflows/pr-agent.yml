@@ -1,0 +1,39 @@
+name: PR Agent
+
+on:
+  pull_request:
+    types: [opened, reopened, ready_for_review]
+  issue_comment:
+    types: [created]
+
+permissions: {}
+
+jobs:
+  pr_agent:
+    name: PR Agent (Gemini)
+    # Only for the repo owner's own PRs and comments, so bots and strangers
+    # can't spend the Gemini quota.
+    if: >-
+      github.event.sender.login == github.repository_owner &&
+      (github.event_name == 'pull_request' || github.event.issue.pull_request)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
+    steps:
+      - name: PR Agent
+        # Advisory only: a busy or rate-limited Gemini API must not turn the PR red.
+        continue-on-error: true
+        uses: the-pr-agent/pr-agent@e673a02076ce09a4726c3d0c3cc85780e59ca52b # v0.50.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GOOGLE_AI_STUDIO.GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          CONFIG.MODEL: gemini/gemini-3.5-flash-lite
+          # Not in PR-Agent's built-in model table, so give its context size.
+          CONFIG.CUSTOM_MODEL_MAX_TOKENS: 1048576
+          CONFIG.FALLBACK_MODELS: "[]"
+          # Never rewrite the PR description.
+          GITHUB_ACTION_CONFIG.AUTO_DESCRIBE: "false"
+          # Review automatically; ask for code suggestions with /improve (saves free-tier quota).
+          GITHUB_ACTION_CONFIG.AUTO_IMPROVE: "false"
