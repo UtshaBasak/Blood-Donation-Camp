@@ -2,7 +2,7 @@
 Django>=6.1.2,<6.2
 
 # MySQL driver (default database backend for this project)
-mysqlclient>=2.3.0
+mysqlclient>=2.3.1
 
 # Reads configuration from a local .env file
 python-dotenv>=1.2.4
